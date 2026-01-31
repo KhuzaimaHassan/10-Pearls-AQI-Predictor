@@ -17,6 +17,7 @@ catboost>=1.2.0
 optuna>=3.0.0
 
 # Feature Store & Model Registry (match backend version 4.2.2)
+confluent-kafka>=1.9.2  # Required by hopsworks 4.2.x
 hopsworks==4.2.*
 
 # Dashboard & Visualization
