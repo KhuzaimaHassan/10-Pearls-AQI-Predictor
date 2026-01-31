@@ -213,14 +213,16 @@ def load_data():
             project = hopsworks.login(api_key_value=api_key, project=project_name)
             fs = project.get_feature_store()
             
-            # Get feature group and read directly (simpler than query API)
+            # Get feature group and read from offline storage (bypass query service)
             fg = fs.get_feature_group(name="aqi_features", version=1)
-            df = fg.read()
+            
+            # Use offline storage with explicit read options to avoid query service
+            df = fg.read(online=False, read_options={"use_hive": True})
             
             if df is not None and not df.empty:
                 df['time'] = pd.to_datetime(df['time'])
                 df = df.sort_values('time')
-                st.success(f"✅ Loaded {len(df):,} records from Hopsworks Feature Store")
+                st.success(f"✅ Loaded {len(df):,} records from Hopsworks Feature Store (offline)")
                 return df
             else:
                 st.warning("Feature group exists but is empty")
