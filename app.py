@@ -212,19 +212,33 @@ def load_data():
             import hopsworks
             project = hopsworks.login(api_key_value=api_key, project=project_name)
             fs = project.get_feature_store()
+            
+            # Get feature group
             fg = fs.get_feature_group(name="aqi_features", version=1)
-            df = fg.read()
-            df['time'] = pd.to_datetime(df['time'])
-            df = df.sort_values('time')
-            return df
+            
+            # Read data using proper query method
+            query = fg.select_all()
+            df = query.read()
+            
+            if df is not None and not df.empty:
+                df['time'] = pd.to_datetime(df['time'])
+                df = df.sort_values('time')
+                st.success(f"✅ Loaded {len(df):,} records from Hopsworks Feature Store")
+                return df
+            else:
+                st.warning("Feature group exists but is empty")
+                
     except Exception as e:
-        st.warning(f"Could not load from Hopsworks: {e}. Trying local files...")
+        st.warning(f"Could not load from Hopsworks: {str(e)}")
     
     # Fallback to local files
     if not os.path.exists(PROCESSED_DATA_FILE):
+        st.error("❌ No data available. Please configure Hopsworks secrets.")
         return None
+        
     df = pd.read_csv(PROCESSED_DATA_FILE)
     df['time'] = pd.to_datetime(df['time'])
+    st.info(f"📁 Loaded {len(df):,} records from local files")
     return df
 
 @st.cache_resource
