@@ -189,9 +189,38 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def load_historical_data():
-    """Load historical AQI data"""
+    """
+    Load historical data from Hopsworks Feature Store
+    Falls back to local files if Hopsworks not available
+    """
+    try:
+        # Try Hopsworks first (for Streamlit Cloud)
+        if hasattr(st, 'secrets') and 'HOPSWORKS_API_KEY' in st.secrets:
+            api_key = st.secrets['HOPSWORKS_API_KEY']
+            project_name = st.secrets['HOPSWORKS_PROJECT_NAME']
+        elif os.path.exists('.env'):
+            from dotenv import load_dotenv
+            load_dotenv()
+            api_key = os.getenv('HOPSWORKS_API_KEY')
+            project_name = os.getenv('HOPSWORKS_PROJECT_NAME', 'three_days_AQI')
+        else:
+            api_key = None
+            
+        if api_key:
+            import hopsworks
+            project = hopsworks.login(api_key_value=api_key, project=project_name)
+            fs = project.get_feature_store()
+            fg = fs.get_feature_group(name="aqi_features", version=1)
+            df = fg.read()
+            df['time'] = pd.to_datetime(df['time'])
+            df = df.sort_values('time')
+            return df
+    except Exception as e:
+        st.warning(f"Could not load from Hopsworks: {e}. Trying local files...")
+    
+    # Fallback to local files
     if not os.path.exists(PROCESSED_DATA_FILE):
         return None
     df = pd.read_csv(PROCESSED_DATA_FILE)
@@ -200,7 +229,54 @@ def load_historical_data():
 
 @st.cache_resource
 def load_models():
-    """Load all trained models with new naming"""
+    """
+    Load models from Hopsworks Model Registry
+    Falls back to local files if Hopsworks not available
+    """
+    try:
+        # Try Hopsworks first (for Streamlit Cloud)
+        if hasattr(st, 'secrets') and 'HOPSWORKS_API_KEY' in st.secrets:
+            api_key = st.secrets['HOPSWORKS_API_KEY']
+            project_name = st.secrets['HOPSWORKS_PROJECT_NAME']
+        elif os.path.exists('.env'):
+            from dotenv import load_dotenv
+            load_dotenv()
+            api_key = os.getenv('HOPSWORKS_API_KEY')
+            project_name = os.getenv('HOPSWORKS_PROJECT_NAME', 'three_days_AQI')
+        else:
+            api_key = None
+            
+        if api_key:
+            import hopsworks
+            import glob as glob_module
+            project = hopsworks.login(api_key_value=api_key, project=project_name)
+            mr = project.get_model_registry()
+            
+            models = {}
+            for day in [1, 2, 3]:
+                try:
+                    model_name = f"pearls_aqi_day{day}_catboost"
+                    model = mr.get_model(model_name, version=None)
+                    model_dir = model.download()
+                    model_files = glob_module.glob(f"{model_dir}/*.pkl")
+                    
+                    if model_files:
+                        model_data = joblib.load(model_files[0])
+                        models[f'catboost_day{day}'] = {
+                            'model_data': model_data,
+                            'model_type': 'catboost',
+                            'day': day,
+                            'metrics': model_data.get('metrics', {})
+                        }
+                except:
+                    pass
+            
+            if models:
+                return models
+    except Exception as e:
+        st.warning(f"Could not load from Hopsworks: {e}. Trying local files...")
+    
+    # Fallback to local files
     if not os.path.exists(MODELS_DIR):
         return {}
     
@@ -210,11 +286,8 @@ def load_models():
             filepath = os.path.join(MODELS_DIR, filename)
             try:
                 model_data = joblib.load(filepath)
-                
-                # Extract info from filename: aqi_predictor_{model}_{day}_{timestamp}.pkl
                 parts = filename.replace('.pkl', '').split('_')
                 
-                # Find the model type and day
                 if 'ensemble' in filename:
                     model_type = 'ensemble'
                     day_part = [p for p in parts if 'day' in p][0]
@@ -228,36 +301,23 @@ def load_models():
                     model_type = 'lightgbm'
                     day_part = [p for p in parts if 'day' in p][0]
                 elif 'catboost' in filename:
-                # Get latest version of model
-                model = mr.get_model(model_name, version=None)  # None = latest
-                
-                # Download model to temp directory
-                model_dir = model.download()
-                
-                # Load the model file
-                import glob
-                model_files = glob.glob(f"{model_dir}/*.pkl")
-                
-                if model_files:
-                    import joblib
-                    model_data = joblib.load(model_files[0])
-                    models[f'day{day}'] = model_data
+                    model_type = 'catboost'
+                    day_part = [p for p in parts if 'day' in p][0]
                 else:
-                    st.warning(f"No model file found for Day {day}")
-                    
+                    continue
+                
+                day = int(day_part.replace('day', ''))
+                key = f"{model_type}_day{day}"
+                models[key] = {
+                    'model_data': model_data,
+                    'model_type': model_type,
+                    'day': day,
+                    'metrics': model_data.get('metrics', {})
+                }
             except Exception as e:
-                st.warning(f"Could not load model for Day {day}: {e}")
-        
-        if not models:
-            st.error("No models could be loaded from Hopsworks")
-            return None
-            
-        return models
-        
-    except Exception as e:
-        st.error(f"Error loading models from Hopsworks: {e}")
-        st.info("Make sure models are uploaded to Hopsworks Model Registry")
-        return None
+                continue
+    
+    return models
 
 def get_best_model_for_day(models, day):
     """Get best performing model for a specific day"""
