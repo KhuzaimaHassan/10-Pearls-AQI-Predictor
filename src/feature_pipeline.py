@@ -360,12 +360,16 @@ def upload_to_hopsworks(df):
         
         return True
         
-    except ImportError:
-        print("❌ Error: hopsworks package not installed")
+    except ImportError as e:
+        print(f"❌ Error importing hopsworks: {e}")
         print("  Install with: pip install hopsworks")
+        import traceback
+        traceback.print_exc()
         return False
     except Exception as e:
         print(f"❌ Error uploading to Hopsworks: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def save_features_locally(df):
