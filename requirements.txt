@@ -12,9 +12,9 @@ catboost
 # Hyperparameter Tuning
 optuna
 
-# Feature Store & Model Registry
-#  Using 3.4.x for Streamlit Cloud (no confluent-kafka dependency)
-hopsworks>=3.4,<3.5
+# Feature Store & Model Registry (backend version 4.2.2)
+confluent-kafka
+hopsworks==4.2.*
 
 # Dashboard & Visualization
 streamlit
