@@ -1,176 +1,218 @@
-# Pearls AQI Predictor
+# 🌍 Pearls AQI Predictor - Karachi Air Quality Forecast
 
-![Python](https://img.shields.io/badge/python-3.9%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+**3-Day Air Quality Index predictions for Karachi, Pakistan using MLOps pipeline with automated hourly data updates and daily model retraining.**
 
-A complete end-to-end machine learning pipeline for predicting Air Quality Index (AQI) in Karachi for the next 3 days using hourly weather data and advanced feature engineering.
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://your-streamlit-app-url.streamlit.app)
 
-## 🌟 Features
+---
 
-- **Automated Data Pipeline**: Hourly data fetching from Open-Meteo API
-- **Feature Engineering**: Lag features, rolling statistics, cyclical encoding
-- **Multi-Model Training**: Linear Regression, Random Forest, XGBoost
-- **Dynamic Model Selection**: Automatically uses the best-performing model daily
-- **Interactive Dashboard**: Streamlit app with real-time predictions and visualizations
-- **CI/CD Automation**: GitHub Actions for continuous model improvement
+## 📊 **Project Overview**
 
-## 🏗️ Architecture
+This project provides **3-day ahead AQI predictions** for Karachi using machine learning models trained on historical weather and air quality data. The entire pipeline is fully automated using:
 
-```
-Open-Meteo API → Feature Engineering → Hopsworks Feature Store
-                                    ↓
-                              Model Training → Hopsworks Model Registry
-                                    ↓
-                              Streamlit Dashboard
-```
+- **Hopsworks:** Feature Store & Model Registry
+- **GitHub Actions:** Automated hourly data fetching & daily model training
+- **Streamlit Cloud:** Interactive dashboard deployment
 
-## 📋 Requirements
+---
 
-- Python 3.9 or higher
-- Hopsworks account (free tier available at [hopsworks.ai](https://www.hopsworks.ai/))
-- Git (for version control and CI/CD)
+## 🎯 **Features**
 
-## 🚀 Quick Start
+### ✅ **Automated MLOps Pipeline**
+- **Hourly Data Fetch**: Fresh AQI & weather data from Open-Meteo API
+- **Hourly Feature Engineering**: 32 features with lag, rolling windows, temporal encodings
+- **Daily Model Training**: 15 models (5 algorithms × 3 days) with Optuna hyperparameter tuning
+- **Hopsworks Integration**: Feature Store & Model Registry
 
-### 1. Clone the Repository
+### 📈 **Dashboard**
+- **Real-time Predictions**: 3-day AQI forecast
+- **Historical Trends**: Interactive charts with Plotly
+- **Model Performance**: R², MAE, RMSE metrics
+- **Live Updates**: Data & models from Hopsworks
 
+### 🤖 **Machine Learning**
+- **Algorithms**: XGBoost, LightGBM, CatBoost, Random Forest, Linear Regression
+- **Features**: Lag features, rolling statistics, wind components, temporal encodings
+- **Optimization**: Optuna for hyperparameter tuning
+
+---
+
+## 🚀 **Quick Start**
+
+### **Prerequisites**
+- Python 3.10+
+- Hopsworks account ([Sign up free](https://www.hopsworks.ai/))
+- GitHub account (for automation)
+
+### **Installation**
+
+1. **Clone Repository**
 ```bash
-git clone <your-repo-url>
-cd Pearls_AQI
+git clone https://github.com/KhuzaimaHassan/10-Pearls-AQI-Predictor.git
+cd 10-Pearls-AQI-Predictor
 ```
 
-### 2. Set Up Virtual Environment
-
-**Windows (PowerShell):**
-```powershell
-python -m venv .venv
-.\.venv\Scripts\activate
-```
-
-**Linux/Mac:**
+2. **Install Dependencies**
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Install Dependencies
-
-```powershell
-pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
-
-Create a `.env` file in the project root:
-
+3. **Configure Environment**
+Create `.env` file:
 ```env
 HOPSWORKS_API_KEY=your_api_key_here
 HOPSWORKS_PROJECT_NAME=your_project_name
 ```
 
-**To get your Hopsworks API key:**
-1. Sign up at [hopsworks.ai](https://www.hopsworks.ai/)
-2. Create a new project
-3. Go to Settings → API Keys → Generate new key
-
-### 5. Run the Data Pipeline
-
-**Fetch historical data:**
-```powershell
+4. **Run Pipeline**
+```bash
+# Fetch data
 python src/fetch_data.py
-```
 
-**Engineer features and upload to Hopsworks:**
-```powershell
+# Generate features
 python src/feature_pipeline.py
-```
 
-**Train models:**
-```powershell
+# Train models
 python src/train_model.py
-```
 
-### 6. Launch the Dashboard
-
-```powershell
+# Run dashboard
 streamlit run app.py
 ```
 
-The app will open at `http://localhost:8501`
+---
 
-## 📊 Project Structure
+## 📁 **Project Structure**
 
 ```
 Pearls_AQI/
-├── .venv/                      # Virtual environment (not in Git)
-├── .github/
-│   └── workflows/
-│       └── data_pipeline.yml   # GitHub Actions automation
+├── .github/workflows/       # GitHub Actions automation
+│   ├── feature_pipeline.yml # Hourly data fetch & upload
+│   └── train_model.yml      # Daily model training
 ├── data/
-│   ├── raw/                    # Raw API data
-│   └── processed/              # Engineered features
-├── models/                     # Trained model artifacts
-├── notebooks/                  # Jupyter notebooks (exploratory analysis)
+│   ├── raw/                 # Raw AQI & weather data
+│   └── processed/           # Engineered features
+├── models/                  # Trained ML models
+├── notebooks/               # EDA & analysis notebooks
 ├── src/
-│   ├── config.py              # Configuration & constants
-│   ├── fetch_data.py          # Data acquisition
-│   ├── feature_pipeline.py    # Feature engineering
-│   └── train_model.py         # Model training
-├── app.py                      # Streamlit dashboard
-├── requirements.txt            # Python dependencies
-├── .env                        # Environment variables (not in Git)
-├── .gitignore                 # Git ignore rules
-└── README.md                  # This file
+│   ├── config.py           # Configuration
+│   ├── fetch_data.py       # Data acquisition
+│   ├── feature_pipeline.py # Feature engineering
+│   └── train_model.py      # Model training
+├── app.py                  # Streamlit dashboard
+├── requirements.txt        # Python dependencies
+├── packages.txt           # System packages (for Streamlit Cloud)
+└── README.md
 ```
 
-## 🤖 Automation (Optional)
+---
 
-To enable automated hourly data updates and daily model retraining:
+## 🔄 **MLOps Pipeline**
 
-1. **Push code to GitHub:**
-   ```powershell
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git remote add origin <your-repo-url>
-   git push -u origin main
-   ```
+### **Hourly Workflow** (GitHub Actions)
+1. Fetch latest AQI & weather data (Open-Meteo API)
+2. Generate 32 engineered features
+3. Upload to Hopsworks Feature Store
+4. Run every hour via GitHub Actions
 
-2. **Add GitHub Secrets:**
-   - Go to your repository → Settings → Secrets and variables → Actions
-   - Add secret: `HOPSWORKS_API_KEY` with your Hopsworks API key
+### **Daily Workflow** (GitHub Actions)
+1. Download features from Hopsworks
+2. Train 15 models (5 algorithms × 3 forecast days)
+3. Tune hyperparameters with Optuna
+4. Upload models to Hopsworks Model Registry
+5. Run daily at midnight UTC
 
-3. **Enable GitHub Actions:**
-   - Go to Actions tab and enable workflows
+### **Dashboard** (Streamlit Cloud)
+1. Load features from Hopsworks Feature Store
+2. Download models from Hopsworks Model Registry
+3. Generate 3-day predictions
+4. Display interactive visualizations
+5. Auto-updates with new data & models
 
-The pipeline will now:
-- Fetch new data every hour
-- Retrain models daily at 2 AM UTC
-- Automatically update the Streamlit app with the best model
+---
 
-## 📈 Model Performance
+## 📊 **Data Sources**
 
-The system trains and evaluates three model types:
-- **Linear Regression**: Fast baseline model
-- **Random Forest**: Handles non-linear relationships
-- **XGBoost**: Typically the best performer
+- **Open-Meteo API**: Historical & forecast weather data
+  - Temperature, humidity, wind speed, precipitation
+  - PM2.5, PM10, US AQI
+  - Location: Karachi (24.8607°N, 67.0011°E)
 
-All models are saved daily, and the dashboard automatically uses the best one based on R² scores.
+---
 
-## 🌍 API Data Sources
+## 🎯 **Model Performance**
 
-- **Air Quality**: [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api)
-- **Weather**: [Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api)
+Current models achieve:
+- **Day 1**: R² ~0.85-0.90, MAE ~15-20
+- **Day 2**: R² ~0.75-0.82, MAE ~20-28  
+- **Day 3**: R² ~0.65-0.75, MAE ~25-35
 
-## 📝 License
+---
 
-MIT License - feel free to use this project for learning and development!
+## 🛠️ **Technologies Used**
 
-## 🤝 Contributing
+| Category | Technologies |
+|----------|-------------|
+| **ML Frameworks** | XGBoost, LightGBM, CatBoost, Scikit-learn |
+| **Feature Store** | Hopsworks |
+| **Orchestration** | GitHub Actions |
+| **Dashboard** | Streamlit, Plotly |
+| **Data** | Pandas, NumPy |
+| **Optimization** | Optuna |
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+---
 
-## 📧 Contact
+## 📝 **Configuration**
 
-For questions or suggestions, please open an issue on GitHub.
+### **GitHub Secrets** (for automation)
+Add these to your repository settings:
+```
+HOPSWORKS_API_KEY=<your_hopsworks_api_key>
+HOPSWORKS_PROJECT_NAME=<your_project_name>
+```
+
+### **Streamlit Cloud Secrets**
+Add to Streamlit Cloud app settings:
+```toml
+HOPSWORKS_API_KEY='<your_hopsworks_api_key>'
+HOPSWORKS_PROJECT_NAME='<your_project_name>'
+```
+
+---
+
+## 🤝 **Contributing**
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+---
+
+## 📄 **License**
+
+This project is licensed under the MIT License.
+
+---
+
+## 👤 **Author**
+
+**Khuza
+
+ima Hassan**
+- GitHub: [@KhuzaimaHassan](https://github.com/KhuzaimaHassan)
+
+---
+
+## 🙏 **Acknowledgments**
+
+- **Open-Meteo** for free weather & AQI data API
+- **Hopsworks** for Feature Store & Model Registry
+- **Streamlit** for easy dashboard deployment
+- **10 Pearls** for project inspiration
+
+---
+
+## 📧 **Contact**
+
+For questions or feedback, please open an issue on GitHub.
