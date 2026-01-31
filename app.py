@@ -213,12 +213,9 @@ def load_data():
             project = hopsworks.login(api_key_value=api_key, project=project_name)
             fs = project.get_feature_store()
             
-            # Get feature group
+            # Get feature group and read directly (simpler than query API)
             fg = fs.get_feature_group(name="aqi_features", version=1)
-            
-            # Read data using proper query method
-            query = fg.select_all()
-            df = query.read()
+            df = fg.read()
             
             if df is not None and not df.empty:
                 df['time'] = pd.to_datetime(df['time'])
