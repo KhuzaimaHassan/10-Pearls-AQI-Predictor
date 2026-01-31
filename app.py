@@ -228,28 +228,36 @@ def load_models():
                     model_type = 'lightgbm'
                     day_part = [p for p in parts if 'day' in p][0]
                 elif 'catboost' in filename:
-                    model_type = 'catboost'
-                    day_part = [p for p in parts if 'day' in p][0]
-                elif 'ridge' in filename:
-                    model_type = 'ridge'
-                    day_part = [p for p in parts if 'day' in p][0]
+                # Get latest version of model
+                model = mr.get_model(model_name, version=None)  # None = latest
+                
+                # Download model to temp directory
+                model_dir = model.download()
+                
+                # Load the model file
+                import glob
+                model_files = glob.glob(f"{model_dir}/*.pkl")
+                
+                if model_files:
+                    import joblib
+                    model_data = joblib.load(model_files[0])
+                    models[f'day{day}'] = model_data
                 else:
-                    continue
-                
-                day = int(day_part.replace('day', ''))
-                
-                key = f"{model_type}_day{day}"
-                models[key] = {
-                    'model_data': model_data,
-                    'model_type': model_type,
-                    'day': day,
-                    'metrics': model_data.get('metrics', {})
-                }
+                    st.warning(f"No model file found for Day {day}")
+                    
             except Exception as e:
-                st.warning(f"Could not load {filename}: {e}")
-                continue
-    
-    return models
+                st.warning(f"Could not load model for Day {day}: {e}")
+        
+        if not models:
+            st.error("No models could be loaded from Hopsworks")
+            return None
+            
+        return models
+        
+    except Exception as e:
+        st.error(f"Error loading models from Hopsworks: {e}")
+        st.info("Make sure models are uploaded to Hopsworks Model Registry")
+        return None
 
 def get_best_model_for_day(models, day):
     """Get best performing model for a specific day"""
@@ -435,7 +443,7 @@ def main():
     
     # Load data
     with st.spinner('🔄 Loading data and models...'):
-        df = load_historical_data()
+        df = load_data()
         models = load_models()
     
     if df is None:
