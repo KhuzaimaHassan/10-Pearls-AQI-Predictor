@@ -13,6 +13,7 @@ catboost
 optuna
 
 # Feature Store & Model Registry
+confluent-kafka
 hopsworks==4.2.*
 
 # Dashboard & Visualization
