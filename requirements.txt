@@ -16,8 +16,8 @@ catboost>=1.2.0
 # Hyperparameter Tuning
 optuna>=3.0.0
 
-# Feature Store & Model Registry
-hopsworks>=3.4.0
+# Feature Store & Model Registry (match backend version 4.2.2)
+hopsworks==4.2.*
 
 # Dashboard & Visualization
 streamlit>=1.31.0
