@@ -88,10 +88,6 @@ Pearls_AQI/
 ├── .github/workflows/       # GitHub Actions automation
 │   ├── feature_pipeline.yml # Hourly data fetch & upload
 │   └── train_model.yml      # Daily model training
-├── data/
-│   ├── raw/                 # Raw AQI & weather data
-│   └── processed/           # Engineered features
-├── models/                  # Trained ML models
 ├── notebooks/               # EDA & analysis notebooks
 ├── src/
 │   ├── config.py           # Configuration
@@ -121,7 +117,7 @@ Pearls_AQI/
 4. Upload models to Hopsworks Model Registry
 5. Run daily at midnight UTC
 
-### **Dashboard** (Streamlit Cloud)
+### **Dashboard** (Hugging Face space)
 1. Load features from Hopsworks Feature Store
 2. Download models from Hopsworks Model Registry
 3. Generate 3-day predictions
@@ -170,8 +166,8 @@ HOPSWORKS_API_KEY=<your_hopsworks_api_key>
 HOPSWORKS_PROJECT_NAME=<your_project_name>
 ```
 
-### **Streamlit Cloud Secrets**
-Add to Streamlit Cloud app settings:
+### **Hugging Face App Secrets**
+Add to  Hugging Face space settings:
 ```toml
 HOPSWORKS_API_KEY='<your_hopsworks_api_key>'
 HOPSWORKS_PROJECT_NAME='<your_project_name>'
@@ -206,7 +202,7 @@ This project is licensed under the MIT License.
 
 - **Open-Meteo** for free weather & AQI data API
 - **Hopsworks** for Feature Store & Model Registry
-- **Streamlit** for easy dashboard deployment
+- **Hugging Face** for easy dashboard deployment
 - **10 Pearls** for project inspiration
 
 ---
