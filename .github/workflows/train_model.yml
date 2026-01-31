@@ -56,9 +56,10 @@ jobs:
           python upload_models.py
         continue-on-error: false
       
-      - name: Upload training artifacts
-        uses: actions/upload-artifact@v3
+      - name: Upload trained models
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: daily-trained-models
-          path: models/*.pkl
+          path: models/
           retention-days: 7

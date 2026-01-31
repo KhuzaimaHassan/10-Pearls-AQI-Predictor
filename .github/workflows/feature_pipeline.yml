@@ -50,12 +50,12 @@ jobs:
           python src/feature_pipeline.py
         continue-on-error: false
       
-      - name: Upload artifacts on failure
-        if: failure()
-        uses: actions/upload-artifact@v3
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: hourly-fetch-logs
           path: |
-            *.log
+            data/raw/*.csv
             data/processed/*.csv
           retention-days: 3
