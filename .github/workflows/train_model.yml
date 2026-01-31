@@ -53,7 +53,7 @@ jobs:
       
       - name: Upload models to Hopsworks Model Registry
         run: |
-          python upload_models.py
+          python upload_all_models.py
         continue-on-error: false
       
       - name: Upload trained models
