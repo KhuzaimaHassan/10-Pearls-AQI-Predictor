@@ -2,7 +2,7 @@
 
 **3-Day Air Quality Index predictions for Karachi, Pakistan using MLOps pipeline with automated hourly data updates and daily model retraining.**
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://your-streamlit-app-url.streamlit.app)
+[![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Space-yellow)](https://huggingface.co/spaces/KhuzaimaHassan/10pearls-aqi-predictor)
 
 ---
 
