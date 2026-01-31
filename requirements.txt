@@ -13,8 +13,8 @@ catboost
 optuna
 
 # Feature Store & Model Registry
-confluent-kafka
-hopsworks==4.2.*
+#  Using 3.4.x for Streamlit Cloud (no confluent-kafka dependency)
+hopsworks>=3.4,<3.5
 
 # Dashboard & Visualization
 streamlit
