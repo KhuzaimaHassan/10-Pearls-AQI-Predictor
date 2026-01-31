@@ -190,7 +190,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def load_historical_data():
+def load_data():
     """
     Load historical data from Hopsworks Feature Store
     Falls back to local files if Hopsworks not available
