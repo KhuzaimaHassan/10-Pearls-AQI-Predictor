@@ -1,0 +1,64 @@
+name: Daily Model Training and Upload
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC (7 AM Pakistan time) - after hourly data collection
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Manual trigger
+
+env:
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  train-and-upload-models:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Create .env file
+        run: |
+          echo "HOPSWORKS_API_KEY=${{ secrets.HOPSWORKS_API_KEY }}" >> .env
+          echo "HOPSWORKS_PROJECT_NAME=${{ secrets.HOPSWORKS_PROJECT_NAME }}" >> .env
+      
+      - name: Fetch all data and generate features
+        run: |
+          python src/fetch_data.py
+          python src/feature_pipeline.py
+        continue-on-error: false
+      
+      - name: Train models on full dataset
+        run: |
+          python src/train_model.py
+        continue-on-error: false
+      
+      - name: Upload models to Hopsworks Model Registry
+        run: |
+          python upload_models.py
+        continue-on-error: false
+      
+      - name: Upload training artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: daily-trained-models
+          path: models/*.pkl
+          retention-days: 7

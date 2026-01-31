@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment  
+.venv/
+venv/
+ENV/
+env/
+
+# Data files
+data/raw/*.csv
+data/processed/*.csv
+*.pkl
+models/*.pkl
+models_BASELINE/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Temporary files
+*.tmp
+*.bak
+*_BASELINE.py
+compare_*.py
+verify_*.py
+improvement_*.txt
+lstm_*.py
+karachi_*.py
+quick_*.py
+final_*.py
+revert_*.py
+upload_*.py

@@ -1,0 +1,61 @@
+name: Hourly Data Fetch and Feature Upload
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:  # Manual trigger
+
+env:
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  fetch-and-upload-features:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Create .env file
+        run: |
+          echo "HOPSWORKS_API_KEY=${{ secrets.HOPSWORKS_API_KEY }}" >> .env
+          echo "HOPSWORKS_PROJECT_NAME=${{ secrets.HOPSWORKS_PROJECT_NAME }}" >> .env
+      
+      - name: Fetch latest hourly data
+        run: |
+          python src/fetch_data.py
+        continue-on-error: false
+      
+      - name: Generate features with duplicate handling
+        run: |
+          python src/feature_pipeline.py
+        continue-on-error: false
+      
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: hourly-fetch-logs
+          path: |
+            *.log
+            data/processed/*.csv
+          retention-days: 3
