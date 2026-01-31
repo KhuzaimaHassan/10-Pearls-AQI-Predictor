@@ -1,4 +1,4 @@
-# 🌍 Pearls AQI Predictor - Karachi Air Quality Forecast
+#  Pearls AQI Predictor - Karachi Air Quality Forecast
 
 **3-Day Air Quality Index predictions for Karachi, Pakistan using MLOps pipeline with automated hourly data updates and daily model retraining.**
 
@@ -6,38 +6,38 @@
 
 ---
 
-## 📊 **Project Overview**
+##  **Project Overview**
 
 This project provides **3-day ahead AQI predictions** for Karachi using machine learning models trained on historical weather and air quality data. The entire pipeline is fully automated using:
 
 - **Hopsworks:** Feature Store & Model Registry
 - **GitHub Actions:** Automated hourly data fetching & daily model training
-- **Streamlit Cloud:** Interactive dashboard deployment
+- **Hugging Face Space:** Interactive dashboard deployment
 
 ---
 
-## 🎯 **Features**
+##  **Features**
 
-### ✅ **Automated MLOps Pipeline**
+###  **Automated MLOps Pipeline**
 - **Hourly Data Fetch**: Fresh AQI & weather data from Open-Meteo API
 - **Hourly Feature Engineering**: 32 features with lag, rolling windows, temporal encodings
 - **Daily Model Training**: 15 models (5 algorithms × 3 days) with Optuna hyperparameter tuning
 - **Hopsworks Integration**: Feature Store & Model Registry
 
-### 📈 **Dashboard**
+###  **Dashboard**
 - **Real-time Predictions**: 3-day AQI forecast
 - **Historical Trends**: Interactive charts with Plotly
 - **Model Performance**: R², MAE, RMSE metrics
 - **Live Updates**: Data & models from Hopsworks
 
-### 🤖 **Machine Learning**
+###  **Machine Learning**
 - **Algorithms**: XGBoost, LightGBM, CatBoost, Random Forest, Linear Regression
 - **Features**: Lag features, rolling statistics, wind components, temporal encodings
 - **Optimization**: Optuna for hyperparameter tuning
 
 ---
 
-## 🚀 **Quick Start**
+##  **Quick Start**
 
 ### **Prerequisites**
 - Python 3.10+
@@ -81,7 +81,7 @@ streamlit run app.py
 
 ---
 
-## 📁 **Project Structure**
+##  **Project Structure**
 
 ```
 Pearls_AQI/
@@ -106,7 +106,7 @@ Pearls_AQI/
 
 ---
 
-## 🔄 **MLOps Pipeline**
+##  **MLOps Pipeline**
 
 ### **Hourly Workflow** (GitHub Actions)
 1. Fetch latest AQI & weather data (Open-Meteo API)
@@ -130,7 +130,7 @@ Pearls_AQI/
 
 ---
 
-## 📊 **Data Sources**
+##  **Data Sources**
 
 - **Open-Meteo API**: Historical & forecast weather data
   - Temperature, humidity, wind speed, precipitation
@@ -139,7 +139,7 @@ Pearls_AQI/
 
 ---
 
-## 🎯 **Model Performance**
+##  **Model Performance**
 
 Current models achieve:
 - **Day 1**: R² ~0.85-0.90, MAE ~15-20
@@ -148,7 +148,7 @@ Current models achieve:
 
 ---
 
-## 🛠️ **Technologies Used**
+##  **Technologies Used**
 
 | Category | Technologies |
 |----------|-------------|
@@ -161,7 +161,7 @@ Current models achieve:
 
 ---
 
-## 📝 **Configuration**
+##  **Configuration**
 
 ### **GitHub Secrets** (for automation)
 Add these to your repository settings:
@@ -179,7 +179,7 @@ HOPSWORKS_PROJECT_NAME='<your_project_name>'
 
 ---
 
-## 🤝 **Contributing**
+##  **Contributing**
 
 Contributions welcome! Please:
 1. Fork the repository
@@ -189,22 +189,20 @@ Contributions welcome! Please:
 
 ---
 
-## 📄 **License**
+##  **License**
 
 This project is licensed under the MIT License.
 
 ---
 
-## 👤 **Author**
+##  **Author**
 
-**Khuza
-
-ima Hassan**
+**Khuzaima Hassan**
 - GitHub: [@KhuzaimaHassan](https://github.com/KhuzaimaHassan)
 
 ---
 
-## 🙏 **Acknowledgments**
+##  **Acknowledgments**
 
 - **Open-Meteo** for free weather & AQI data API
 - **Hopsworks** for Feature Store & Model Registry
@@ -213,6 +211,6 @@ ima Hassan**
 
 ---
 
-## 📧 **Contact**
+##  **Contact**
 
 For questions or feedback, please open an issue on GitHub.
