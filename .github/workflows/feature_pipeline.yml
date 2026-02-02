@@ -40,14 +40,8 @@ jobs:
           echo "HOPSWORKS_API_KEY=${{ secrets.HOPSWORKS_API_KEY }}" >> .env
           echo "HOPSWORKS_PROJECT_NAME=${{ secrets.HOPSWORKS_PROJECT_NAME }}" >> .env
       
-      - name: Fetch latest hourly data
-        run: |
-          python src/fetch_data.py
-        continue-on-error: false
-      
-      - name: Generate features with duplicate handling
-        run: |
-          python src/feature_pipeline.py
+      - name: Run incremental hourly data fetch
+        run: python src/incremental_fetch.py
         continue-on-error: false
       
       - name: Upload logs
