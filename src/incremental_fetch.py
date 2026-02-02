@@ -45,7 +45,7 @@ def get_latest_timestamp_from_hopsworks():
         df = fg.read()
         
         if not df.empty and 'time' in df.columns:
-            latest_time = pd.to_datetime(df['time'].max())
+            latest_time = pd.to_datetime(df['time'].max()).tz_localize(None)
             print(f"   ✅ Latest data in Hopsworks: {latest_time}")
             return latest_time
         else:
