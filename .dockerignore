@@ -1,0 +1,17 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+catboost_info/
+data/raw/
+data/processed/
+models/*.joblib
+*.log
+.DS_Store
+STREAMLIT_HOPSWORKS.md
+check_hopsworks.py
+upload_features.py
+upload_models.py
+upload_all_models.py
+README.md
+README_HF.md

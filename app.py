@@ -23,7 +23,7 @@ from src.config import (
 
 # Page configuration
 st.set_page_config(
-    page_title="Pearls AQI Predictor",
+    page_title="Pearls AQI Predictor - Karachi Air Quality Forecast",
     page_icon="🌍",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -189,24 +189,34 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data(ttl=3600)  # Cache for 1 hour
+@st.cache_data(ttl=300)  # Cache for 5 minutes (reduced from 1 hour)
 def load_data():
     """
     Load historical data from Hopsworks Feature Store
     Falls back to local files if Hopsworks not available
     """
     try:
-        # Try Hopsworks first (for Streamlit Cloud)
-        if hasattr(st, 'secrets') and 'HOPSWORKS_API_KEY' in st.secrets:
+        # Try to get credentials from environment variables (HF Spaces) or st.secrets (Streamlit Cloud) or .env (local)
+        api_key = None
+        project_name = None
+        
+        # Priority 1: Environment variables (Hugging Face Spaces)
+        if os.getenv('HOPSWORKS_API_KEY'):
+            api_key = os.getenv('HOPSWORKS_API_KEY')
+            project_name = os.getenv('HOPSWORKS_PROJECT_NAME', 'three_days_AQI')
+            st.info("🔑 Using Hopsworks credentials from environment variables")
+        # Priority 2: Streamlit secrets (Streamlit Cloud)
+        elif hasattr(st, 'secrets') and 'HOPSWORKS_API_KEY' in st.secrets:
             api_key = st.secrets['HOPSWORKS_API_KEY']
-            project_name = st.secrets['HOPSWORKS_PROJECT_NAME']
+            project_name = st.secrets.get('HOPSWORKS_PROJECT_NAME', 'three_days_AQI')
+            st.info("🔑 Using Hopsworks credentials from Streamlit secrets")
+        # Priority 3: .env file (local development)
         elif os.path.exists('.env'):
             from dotenv import load_dotenv
             load_dotenv()
             api_key = os.getenv('HOPSWORKS_API_KEY')
             project_name = os.getenv('HOPSWORKS_PROJECT_NAME', 'three_days_AQI')
-        else:
-            api_key = None
+            st.info("🔑 Using Hopsworks credentials from .env file")
             
         if api_key:
             import hopsworks
@@ -219,10 +229,11 @@ def load_data():
             # Use offline storage with explicit read options to avoid query service
             df = fg.read(online=False, read_options={"use_hive": True})
             
+            
             if df is not None and not df.empty:
                 df['time'] = pd.to_datetime(df['time'])
                 df = df.sort_values('time')
-                st.success(f"✅ Loaded {len(df):,} records from Hopsworks Feature Store (offline)")
+                # Data loaded successfully (silent)
                 return df
             else:
                 st.warning("Feature group exists but is empty")
@@ -247,17 +258,24 @@ def load_models():
     Falls back to local files if Hopsworks not available
     """
     try:
-        # Try Hopsworks first (for Streamlit Cloud)
-        if hasattr(st, 'secrets') and 'HOPSWORKS_API_KEY' in st.secrets:
+        # Get credentials (same priority as load_data)
+        api_key = None
+        project_name = None
+        
+        # Priority 1: Environment variables (Hugging Face Spaces)
+        if os.getenv('HOPSWORKS_API_KEY'):
+            api_key = os.getenv('HOPSWORKS_API_KEY')
+            project_name = os.getenv('HOPSWORKS_PROJECT_NAME', 'three_days_AQI')
+        # Priority 2: Streamlit secrets (Streamlit Cloud)
+        elif hasattr(st, 'secrets') and 'HOPSWORKS_API_KEY' in st.secrets:
             api_key = st.secrets['HOPSWORKS_API_KEY']
-            project_name = st.secrets['HOPSWORKS_PROJECT_NAME']
+            project_name = st.secrets.get('HOPSWORKS_PROJECT_NAME', 'three_days_AQI')
+        # Priority 3: .env file (local development)
         elif os.path.exists('.env'):
             from dotenv import load_dotenv
             load_dotenv()
             api_key = os.getenv('HOPSWORKS_API_KEY')
             project_name = os.getenv('HOPSWORKS_PROJECT_NAME', 'three_days_AQI')
-        else:
-            api_key = None
             
         if api_key:
             import hopsworks
@@ -266,26 +284,30 @@ def load_models():
             mr = project.get_model_registry()
             
             models = {}
-            for day in [1, 2, 3]:
-                try:
-                    model_name = f"pearls_aqi_day{day}_catboost"
-                    model = mr.get_model(model_name, version=None)
-                    model_dir = model.download()
-                    model_files = glob_module.glob(f"{model_dir}/*.pkl")
-                    
-                    if model_files:
-                        model_data = joblib.load(model_files[0])
-                        models[f'catboost_day{day}'] = {
-                            'model_data': model_data,
-                            'model_type': 'catboost',
-                            'day': day,
-                            'metrics': model_data.get('metrics', {})
-                        }
-                except:
-                    pass
+            model_types = ['catboost', 'xgboost', 'lightgbm', 'random_forest', 'ensemble']
             
-            if models:
-                return models
+            for day in [1, 2, 3]:
+                for model_type in model_types:
+                    try:
+                        model_name = f"pearls_aqi_day{day}_{model_type}"
+                        model = mr.get_model(model_name, version=None)  # Get latest version
+                        model_dir = model.download()
+                        model_files = glob_module.glob(f"{model_dir}/*.pkl")
+                        
+                        if model_files:
+                            model_data = joblib.load(model_files[0])
+                            models[f'{model_type}_day{day}'] = {
+                                'model_data': model_data,
+                                'model_type': model_type,
+                                'day': day,
+                                'name': model_name
+                            }
+                            # Model loaded successfully (silent)
+                            pass
+                    except Exception as e:
+                        # Failed to load model (silent - just skip)
+                        continue
+            return models
     except Exception as e:
         st.warning(f"Could not load from Hopsworks: {e}. Trying local files...")
     
@@ -339,9 +361,26 @@ def get_best_model_for_day(models, day):
     if not candidate_models:
         return None
     
-    # Sort by CV R² score
-    best_key = max(candidate_models.keys(), 
-                   key=lambda k: candidate_models[k]['metrics'].get('cv_mean_test_r2', -999))
+    # Try to get model with best metrics, otherwise just use CatBoost or first available
+    best_key = None
+    best_score = -999
+    
+    for key, model_dict in candidate_models.items():
+        # Check if metrics exist in model_data
+        model_data = model_dict.get('model_data', {})
+        metrics = model_data.get('metrics', {})
+        score = metrics.get('cv_mean_test_r2', -999)
+        
+        if score > best_score:
+            best_score = score
+            best_key = key
+    
+    # If no metrics found, prefer catboost, then first available
+    if best_key is None or best_score == -999:
+        if any('catboost' in k for k in candidate_models.keys()):
+            best_key = [k for k in candidate_models.keys() if 'catboost' in k][0]
+        else:
+            best_key = list(candidate_models.keys())[0]
     
     return candidate_models[best_key]
 
@@ -580,21 +619,57 @@ def main():
             if best_model:
                 selected_models[day] = best_model
     
-    # Sidebar info
+    # Sidebar - Model Status
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### ℹ️ About")
-    st.sidebar.info("""
-    **Models**: Ridge, Random Forest, XGBoost, LightGBM, CatBoost, Ensemble
+    st.sidebar.markdown("### ✅ System Status")
     
-    **Features**: 20+ temporal lags, weather data, time encodings
+    # Check which model types are fully loaded (all 3 days)
+    model_types_status = {}
+    for model_type in ['catboost', 'xgboost', 'lightgbm', 'random_forest', 'ensemble']:
+        days_loaded = [day for day in [1, 2, 3] if f'{model_type}_day{day}' in models]
+        model_types_status[model_type] = len(days_loaded) == 3
     
-    **Validation**: 5-fold Time Series CV
+    # Display model status
+    model_display = {
+        'catboost': 'CatBoost',
+        'xgboost': 'XGBoost', 
+        'lightgbm': 'LightGBM',
+        'random_forest': 'Random Forest',
+        'ensemble': 'Ensemble'
+    }
     
-    **Data**: Open-Meteo API (hourly updates)
-    """)
+    for model_type, is_loaded in model_types_status.items():
+        icon = "✅" if is_loaded else "❌"
+        st.sidebar.markdown(f"{icon} **{model_display[model_type]}**")
+    
+    st.sidebar.markdown(f"\n📊 **{len(df):,}** records loaded")
+    
+    # Add data freshness info
+    if df is not None and not df.empty:
+        latest_time = pd.to_datetime(df['time'].max())
+        # Remove timezone info to avoid tz-naive/tz-aware comparison errors
+        if latest_time.tz is not None:
+            latest_time = latest_time.tz_localize(None)
+        
+        current_time = pd.Timestamp.now().tz_localize(None) if pd.Timestamp.now().tz else pd.Timestamp.now()
+        hours_old = (current_time - latest_time).total_seconds() / 3600
+        
+        st.sidebar.markdown(f"**🕑 Data as of:** {latest_time.strftime('%Y-%m-%d %H:%M')}")
+        
+        if hours_old > 2:
+            st.sidebar.warning(f"⚠️ Data is {hours_old:.1f} hours old")
+        else:
+            st.sidebar.success(f"✅ Fresh data ({hours_old:.1f}h old)")
+    
+    # Add manual refresh button
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🔄 Refresh Data", help="Clear cache and reload from Hopsworks"):
+        st.cache_data.clear()
+        st.rerun()
+    
     
     # Main tabs
-    tab1, tab2, tab3 = st.tabs(["📈 Forecast", "📊 Historical Trends", "🤖 Model Performance"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📈 Forecast", "📊 Historical Trends", "🤖 Model Performance", "ℹ️ About"])
     
     # TAB 1: FORECAST
     with tab1:
@@ -647,7 +722,13 @@ def main():
             st.markdown("## Current Conditions")
             
             latest = df.iloc[-1]
-            current_time = latest['time'].strftime("%Y-%m-%d %H:%M")
+            # Get the actual latest timestamp from all data (not just last row)
+            latest_timestamp = pd.to_datetime(df['time'].max())
+            # Remove timezone for consistent display
+            if latest_timestamp.tz is not None:
+                latest_timestamp = latest_timestamp.tz_localize(None)
+            current_time = latest_timestamp.strftime("%Y-%m-%d %H:%M")
+
             
             col1, col2, col3, col4 = st.columns(4)
             
@@ -730,7 +811,10 @@ def main():
         # Create comparison dataframe
         comparison_data = []
         for key, model_dict in models.items():
-            metrics = model_dict['metrics']
+            # Safely get metrics from model_data
+            model_data = model_dict.get('model_data', {})
+            metrics = model_data.get('metrics', {})
+            
             comparison_data.append({
                 'Model': model_dict['model_type'].replace('_', ' ').title(),
                 'Day': model_dict['day'],
@@ -776,6 +860,39 @@ def main():
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
+    
+    # TAB 4: ABOUT
+    with tab4:
+        st.markdown("## About This Application")
+        st.markdown("""
+        This application provides a 3-day Air Quality Index (AQI) forecast for Karachi, Pakistan,
+        along with historical trend analysis and model performance comparison.
+        
+        ### Data Source
+        The historical and current weather data, including PM2.5, PM10, and temperature,
+        is sourced from [Open-Meteo](https://open-meteo.com/).
+        
+        ### Forecasting Models
+        The application utilizes an ensemble of machine learning models, including:
+        - **CatBoost**
+        - **XGBoost**
+        - **LightGBM**
+        - **Random Forest**
+        
+        These models are trained daily on the latest available data to provide accurate predictions.
+        The 'Ensemble' model combines predictions from the individual models.
+        
+        ### AQI Calculation
+        The AQI is calculated based on the concentration of various pollutants, primarily PM2.5 and PM10,
+        following standard environmental agency guidelines.
+        
+        ### Development
+        This application is built using Python and the Streamlit framework,
+        making it easy to deploy interactive data science applications.
+        
+        ### Contact
+        For any inquiries or feedback, please contact [your_email@example.com].
+        """)
     
     # Footer
     st.markdown("---")
