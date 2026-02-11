@@ -1,1 +1,3 @@
+build-essential
+libgomp1
 librdkafka-dev
