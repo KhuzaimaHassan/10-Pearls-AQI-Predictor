@@ -3,9 +3,8 @@ title: Pearls AQI Predictor
 emoji: 🌍
 colorFrom: blue
 colorTo: purple
-sdk: streamlit
-sdk_version: "1.31.1"
-app_file: app.py
+sdk: docker
+app_port: 8501
 pinned: false
 license: mit
 ---
