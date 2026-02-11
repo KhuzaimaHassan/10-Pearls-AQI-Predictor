@@ -253,7 +253,7 @@ def load_data():
     st.info(f"📁 Loaded {len(df):,} records from local files")
     return df
 
-@st.cache_resource
+@st.cache_resource(ttl=3600)  # Refresh models every hour to get latest trained versions
 def load_models():
     """
     Load models from Hopsworks Model Registry
@@ -555,6 +555,15 @@ def main():
     st.markdown('<div class="main-header">🌍 Pearls AQI Predictor</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">3-Day Air Quality Forecast for Karachi, Pakistan</div>', unsafe_allow_html=True)
     
+    # Info badges
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown('<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0.5rem 1rem; border-radius: 0.5rem; text-align: center; margin-bottom: 1rem;"><span style="font-size: 0.9rem; color: white;">📊 <b>US AQI Standard</b></span></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 0.5rem 1rem; border-radius: 0.5rem; text-align: center; margin-bottom: 1rem;"><span style="font-size: 0.9rem; color: white;">🕐 <b>Timezone: PKT (UTC+5)</b></span></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown('<div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 0.5rem 1rem; border-radius: 0.5rem; text-align: center; margin-bottom: 1rem;"><span style="font-size: 0.9rem; color: white;">🔄 <b>Hourly Updates</b></span></div>', unsafe_allow_html=True)
+    
     # Load data
     with st.spinner('🔄 Loading data and models...'):
         df = load_data()
@@ -598,7 +607,7 @@ def main():
             freshness_text = "Stale"
         
         st.sidebar.markdown(f"**Data Status:** {freshness_color} {freshness_text}")
-        st.sidebar.markdown(f"**Last Updated:** {latest_time.strftime('%Y-%m-%d %H:%M')}")
+        st.sidebar.markdown(f"**Last Updated (PKT):** {latest_time.strftime('%Y-%m-%d %H:%M')}")
         st.sidebar.markdown(f"**Age:** {hours_old:.1f} hours")
     
     # Refresh button
