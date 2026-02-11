@@ -1,3 +1,15 @@
+---
+title: Pearls AQI Predictor
+emoji: 🌍
+colorFrom: blue
+colorTo: purple
+sdk: streamlit
+sdk_version: "1.31.1"
+app_file: app.py
+pinned: false
+license: mit
+---
+
 #  Pearls AQI Predictor - Karachi Air Quality Forecast
 
 **3-Day Air Quality Index predictions for Karachi, Pakistan using MLOps pipeline with automated hourly data updates and daily model retraining.**
