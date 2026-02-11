@@ -577,7 +577,15 @@ def main():
     # Data freshness indicator
     if df is not None and not df.empty:
         latest_time = df['time'].max()
-        hours_old = (datetime.now() - latest_time).total_seconds() / 3600
+        
+        # Ensure both datetimes are timezone-naive for comparison
+        if hasattr(latest_time, 'tz') and latest_time.tz is not None:
+            latest_time = latest_time.tz_localize(None)
+        elif isinstance(latest_time, pd.Timestamp) and latest_time.tzinfo is not None:
+            latest_time = latest_time.tz_localize(None)
+        
+        current_time = datetime.now()
+        hours_old = (current_time - latest_time).total_seconds() / 3600
         
         if hours_old < 2:
             freshness_color = "🟢"
