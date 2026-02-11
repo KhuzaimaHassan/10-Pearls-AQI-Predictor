@@ -17,6 +17,8 @@ from src.config import (
     PROCESSED_DATA_FILE, 
     MODELS_DIR, 
     TARGET_VARIABLE,
+    FEATURE_GROUP_NAME,
+    FEATURE_GROUP_VERSION,
     get_aqi_category,
     get_aqi_color
 )
@@ -189,7 +191,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes (reduced from 1 hour)
+@st.cache_data(ttl=60)  # Cache for 1 minute for real-time updates
 def load_data():
     """
     Load historical data from Hopsworks Feature Store
@@ -224,7 +226,7 @@ def load_data():
             fs = project.get_feature_store()
             
             # Get feature group and read from offline storage (bypass query service)
-            fg = fs.get_feature_group(name="aqi_features", version=1)
+            fg = fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
             
             # Use offline storage with explicit read options to avoid query service
             df = fg.read(online=False, read_options={"use_hive": True})
@@ -570,6 +572,33 @@ def main():
     
     # Sidebar
     st.sidebar.title("📊 Dashboard Controls")
+    st.sidebar.markdown("---")
+    
+    # Data freshness indicator
+    if df is not None and not df.empty:
+        latest_time = df['time'].max()
+        hours_old = (datetime.now() - latest_time).total_seconds() / 3600
+        
+        if hours_old < 2:
+            freshness_color = "🟢"
+            freshness_text = "Fresh"
+        elif hours_old < 24:
+            freshness_color = "🟡"
+            freshness_text = "Recent"
+        else:
+            freshness_color = "🔴"
+            freshness_text = "Stale"
+        
+        st.sidebar.markdown(f"**Data Status:** {freshness_color} {freshness_text}")
+        st.sidebar.markdown(f"**Last Updated:** {latest_time.strftime('%Y-%m-%d %H:%M')}")
+        st.sidebar.markdown(f"**Age:** {hours_old:.1f} hours")
+    
+    # Refresh button
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🔄 Refresh Data", help="Clear cache and reload latest data from Hopsworks", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+    
     st.sidebar.markdown("---")
     
     # Model selection mode

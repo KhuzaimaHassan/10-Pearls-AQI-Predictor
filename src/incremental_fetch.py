@@ -231,9 +231,9 @@ def main():
     # Step 2: Determine fetch range
     end_time = datetime.now()
     if latest_in_hopsworks:
-        # Fetch from 1 hour before latest (buffer) to now
-        start_time = latest_in_hopsworks - timedelta(hours=1)
-        print(f"\n📅 Fetch range: {start_time} to {end_time}")
+        # Fetch strictly from latest timestamp (no buffer to avoid updates)
+        start_time = latest_in_hopsworks
+        print(f"\n📅 Fetch range: {start_time} to {end_time} (strict new data only)")
     else:
         # First run - fetch last 24 hours
         start_time = end_time - timedelta(hours=FALLBACK_HOURS)
