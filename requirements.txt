@@ -12,6 +12,7 @@ optuna
 
 # Feature Store & Model Registry
 hopsworks==4.2.0
+confluent-kafka
 
 # Dashboard & Visualization
 streamlit==1.31.1
