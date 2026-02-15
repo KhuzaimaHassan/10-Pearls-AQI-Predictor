@@ -8,11 +8,11 @@ scikit-learn==1.4.0
 xgboost==2.0.3
 lightgbm==4.3.0
 catboost==1.2.2
-optuna
+optuna==3.5.0
 
 # Feature Store & Model Registry
 hopsworks==4.2.0
-confluent-kafka
+confluent-kafka==2.3.0
 
 # Dashboard & Visualization
 streamlit==1.31.1
