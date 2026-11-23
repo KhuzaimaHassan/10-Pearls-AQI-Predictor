@@ -11,7 +11,7 @@ license: mit
 
 #  Pearls AQI Predictor - Karachi Air Quality Forecast
 
-**3-Day Air Quality Index predictions for Karachi, Pakistan using MLOps pipeline with automated hourly data updates and daily model retraining.**
+An experimental Streamlit dashboard and scheduled ML pipeline for exploring Karachi air-quality forecasts. The repository includes hourly Open-Meteo ingestion, Hopsworks feature storage, and scheduled model training; these workflows depend on external credentials and successful provider runs.
 
 [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Space-yellow)](https://huggingface.co/spaces/KhuzaimaHassan/10pearls-aqi-predictor)
 
@@ -30,21 +30,20 @@ This project provides **3-day ahead AQI predictions** for Karachi using machine 
 ##  **Features**
 
 ###  **Automated MLOps Pipeline**
-- **Hourly Data Fetch**: Fresh AQI & weather data from Open-Meteo API
-- **Hourly Feature Engineering**: 32 features with lag, rolling windows, temporal encodings
-- **Daily Model Training**: 15 models (5 algorithms × 3 days) with Optuna hyperparameter tuning
+- **Hourly Data Fetch**: `src/incremental_fetch.py` checks the latest Hopsworks timestamp, requests data from Open-Meteo, and uploads newly available hourly records
+- **Daily Model Training**: `src/train_model.py` trains Random Forest, XGBoost, LightGBM and CatBoost models, plus a simple averaged ensemble, across 24/48/72-hour horizons (15 artifacts total)
 - **Hopsworks Integration**: Feature Store & Model Registry
 
 ###  **Dashboard**
-- **Real-time Predictions**: 3-day AQI forecast
+- **Forecasts**: 24/48/72-hour AQI estimates from the loaded model artifacts and available features
 - **Historical Trends**: Interactive charts with Plotly
 - **Model Performance**: R², MAE, RMSE metrics
 - **Live Updates**: Data & models from Hopsworks
 
 ###  **Machine Learning**
-- **Algorithms**: XGBoost, LightGBM, CatBoost, Random Forest, Linear Regression
+- **Algorithms**: Random Forest, XGBoost, LightGBM, CatBoost, plus an averaged ensemble
 - **Features**: Lag features, rolling statistics, wind components, temporal encodings
-- **Optimization**: Optuna for hyperparameter tuning
+- **Optimization**: Optuna code exists, but `USE_BAYESIAN_OPT` is currently `False`; the scheduled run uses the configured base parameters
 
 ---
 
@@ -77,13 +76,13 @@ HOPSWORKS_PROJECT_NAME=your_project_name
 
 4. **Run Pipeline**
 ```bash
-# Fetch data
+# Fetch historical data (requires configured Hopsworks access for upload)
 python src/fetch_data.py
 
-# Generate features
+# Generate and upload the initial feature set
 python src/feature_pipeline.py
 
-# Train models
+# WARNING: training removes existing local *.pkl model files before starting
 python src/train_model.py
 
 # Run dashboard
@@ -97,13 +96,13 @@ streamlit run app.py
 ```
 Pearls_AQI/
 ├── .github/workflows/       # GitHub Actions automation
-│   ├── feature_pipeline.yml # Hourly data fetch & upload
-│   └── train_model.yml      # Daily model training
-├── notebooks/               # EDA & analysis notebooks
+│   ├── feature_pipeline.yml # Hourly incremental fetch & upload
+│   └── train_model.yml      # Daily initial fetch, feature generation, and training
 ├── src/
 │   ├── config.py           # Configuration
-│   ├── fetch_data.py       # Data acquisition
-│   ├── feature_pipeline.py # Feature engineering
+│   ├── fetch_data.py       # Historical data acquisition
+│   ├── incremental_fetch.py # Hourly incremental acquisition & upload
+│   ├── feature_pipeline.py # Initial feature engineering
 │   └── train_model.py      # Model training
 ├── app.py                  # Streamlit dashboard
 ├── requirements.txt        # Python dependencies
@@ -117,16 +116,16 @@ Pearls_AQI/
 
 ### **Hourly Workflow** (GitHub Actions)
 1. Fetch latest AQI & weather data (Open-Meteo API)
-2. Generate 32 engineered features
+2. Create temporal, interaction, wind, lag, and rolling feature columns; incremental rows initialize lag/rolling fields as missing
 3. Upload to Hopsworks Feature Store
 4. Run every hour via GitHub Actions
 
 ### **Daily Workflow** (GitHub Actions)
-1. Download features from Hopsworks
-2. Train 15 models (5 algorithms × 3 forecast days)
-3. Tune hyperparameters with Optuna
-4. Upload models to Hopsworks Model Registry
-5. Run daily at midnight UTC
+1. Run daily at **02:00 UTC (07:00 Pakistan time)**, subject to GitHub Actions schedule availability
+2. Fetch historical data and regenerate features
+3. Train the configured model families for 24-, 48-, and 72-hour horizons with time-series cross-validation
+4. Bayesian Optuna tuning is currently disabled in `src/train_model.py`
+5. Upload model artifacts through `upload_all_models.py` to the Hopsworks registry
 
 ### **Dashboard** (Hugging Face space)
 1. Load features from Hopsworks Feature Store
@@ -148,10 +147,7 @@ Pearls_AQI/
 
 ##  **Model Performance**
 
-Current models achieve:
-- **Day 1**: R² ~0.85-0.90, MAE ~15-20
-- **Day 2**: R² ~0.75-0.82, MAE ~20-28  
-- **Day 3**: R² ~0.65-0.75, MAE ~25-35
+The README does not publish performance estimates because the repository does not provide a linked, reproducible current evaluation report establishing the listed R² and MAE ranges. Training code computes time-series CV and a chronological 70/30 holdout for each model run; inspect that run's output before making performance claims.
 
 ---
 
